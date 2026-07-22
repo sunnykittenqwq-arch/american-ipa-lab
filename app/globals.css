@@ -92,6 +92,7 @@ nav a:hover { color: var(--blue); }
 .phoneme-button { min-height: 112px; position: relative; border: 1px solid var(--line); border-radius: 9px; padding: 18px 12px 14px; background: white; cursor: pointer; text-align: left; transition: border .18s, transform .18s, box-shadow .18s; }
 .phoneme-button:hover { border-color: var(--blue); transform: translateY(-2px); box-shadow: 0 7px 18px rgba(20,33,61,.08); }
 .phoneme-button > span { display: block; font: italic 32px Georgia, serif; }
+.phoneme-button.dual-symbol > span { font-size: 24px; letter-spacing: -.03em; }
 .phoneme-button small { display: block; margin-top: 11px; color: var(--muted); font-size: 11px; }
 .phoneme-button b { position: absolute; right: 11px; top: 11px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #edf2ff; color: var(--blue); font-size: 7px; }
 .phoneme-button em { display: block; margin-top: 5px; color: #8290aa; font-size: 7px; font-style: normal; letter-spacing: .08em; }
@@ -105,6 +106,7 @@ nav a:hover { color: var(--blue); }
 .sound-identity { display: flex; align-items: center; gap: 21px; margin: 22px 0; }
 .big-sound { width: 136px; height: 136px; flex: 0 0 auto; border: 0; border-radius: 12px; background: var(--blue); color: white; display: grid; place-items: center; align-content: center; cursor: pointer; position: relative; }
 .big-sound > span { font: italic 55px/1 Georgia, serif; }
+.big-sound.dual-symbol > span { font-size: 29px; letter-spacing: -.03em; }
 .big-sound small { margin-top: 9px; color: #d6e0ff; font-size: 9px; }
 .big-sound i { position: absolute; right: 9px; top: 9px; width: 25px; height: 25px; display: grid; place-items: center; border-radius: 50%; background: white; color: var(--blue); font-size: 7px; font-style: normal; }
 .sound-wave { height: 13px; margin-top: 9px; display: flex; align-items: center; gap: 3px; }

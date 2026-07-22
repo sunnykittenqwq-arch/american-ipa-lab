@@ -57,7 +57,7 @@ const P = (
 const phonemes: Phoneme[] = [
   P("i", "i", "元音", "前元音", "Front vowels", "see", "/si/", "长衣音", "嘴角向两侧拉开，舌前部抬高；声音清晰、持续，不要读成汉语“衣”。", ["舌位高", "嘴角展开", "紧元音"], [["see", "/si/"], ["need", "/nid/"], ["people", "/ˈpipəl/"]], ["green tea", "feel free"], "We need three clean seats.", "元音后接元音时可自然衔接：see‿it，中间不要停顿。"),
   P("ih", "ɪ", "元音", "前元音", "Front vowels", "sit", "/sɪt/", "短衣音", "嘴唇放松，舌位比 /i/ 稍低；短促收住，避免拉成长音。", ["舌位偏高", "嘴唇放松", "松元音"], [["sit", "/sɪt/"], ["little", "/ˈlɪtəl/"], ["busy", "/ˈbɪzi/"]], ["big city", "quick fix"], "This little gift is for him.", "非重读音节中的 /ɪ/ 常更轻，如 wanted 的末尾。"),
-  P("eh", "ɛ", "元音", "前元音", "Front vowels", "bed", "/bɛd/", "短诶音", "下巴微降，舌前部在中间高度，声音短而松。", ["舌位中", "嘴唇自然", "松元音"], [["bed", "/bɛd/"], ["friend", "/frɛnd/"], ["ready", "/ˈrɛdi/"]], ["best friend", "get ready"], "Ben left ten red pens.", "在 get it 中，/t/ 常闪音化，听起来接近 get‿it。"),
+  P("eh", "ɛ", "元音", "前元音", "Front vowels", "bed", "/bɛd/ · /bed/", "短诶音", "下巴微降，舌前部在中间高度，声音短而松。美式词典多写 /ɛ/，部分英式体系写 /e/，这里并列保留。", ["舌位中", "嘴唇自然", "松元音"], [["bed", "/bɛd/"], ["friend", "/frɛnd/"], ["ready", "/ˈrɛdi/"]], ["best friend", "get ready"], "Ben left ten red pens.", "在 get it 中，/t/ 常闪音化，听起来接近 get‿it。"),
   P("ae", "æ", "元音", "前元音", "Front vowels", "cat", "/kæt/", "大口梅花音", "嘴张大、下巴放低，舌尖抵下齿；从喉咙前部发出饱满的音。", ["舌位低", "嘴巴张大", "松元音"], [["cat", "/kæt/"], ["happy", "/ˈhæpi/"], ["answer", "/ˈænsər/"]], ["black bag", "happy family"], "That black cat sat by the lamp.", "美音中 /æ/ 在鼻音前常略抬高，如 man、answer。"),
 
   P("uh", "ʌ", "元音", "中元音", "Central vowels", "cup", "/kʌp/", "短阿音", "嘴巴自然微张，舌头平放在中央；短促有力，不要发成圆唇音。", ["舌位中央", "短音", "重读"], [["cup", "/kʌp/"], ["love", "/lʌv/"], ["money", "/ˈmʌni/"]], ["much fun", "lunch money"], "My brother loves sunny Sundays.", "功能词重读时可出现 /ʌ/；非重读时通常弱化为 /ə/。"),
@@ -109,6 +109,10 @@ const phonemes: Phoneme[] = [
 const order = ["前元音", "中元音", "后元音", "双元音", "爆破音", "摩擦音", "破擦音", "鼻音", "近音"];
 
 const nativeAudio = audioData.available as Record<string, string>;
+const phonemeAudio = Object.fromEntries(phonemes.map((item) => [item.id, `/audio/phonemes/${item.id}.wav`])) as Record<string, string>;
+const phonemeNotation = (item: Phoneme) => item.id === "eh" ? `/${item.symbol}/ · /e/` : `/${item.symbol}/`;
+
+let currentAudio: HTMLAudioElement | null = null;
 
 const contrasts: Record<string, [string, string, string]> = {
   i: ["sheep", "ship", "/i/ 拉长、嘴角更展开；/ɪ/ 更短、更松"],
@@ -287,6 +291,8 @@ export default function Home() {
 
   const speak = (text: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    currentAudio?.pause();
+    currentAudio = null;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
@@ -307,16 +313,35 @@ export default function Home() {
       return;
     }
     window.speechSynthesis.cancel();
+    currentAudio?.pause();
     const audio = new Audio(new URL(source.replace(/^\/+/, ""), new URL(".", window.location.href)).href);
+    currentAudio = audio;
     audio.playbackRate = rate === 0.72 ? 0.78 : 1;
     setPlaying(text);
-    audio.onended = () => setPlaying("");
-    audio.onerror = () => { setPlaying(""); speak(text); };
+    audio.onended = () => { if (currentAudio === audio) { currentAudio = null; setPlaying(""); } };
+    audio.onerror = () => { if (currentAudio === audio) currentAudio = null; setPlaying(""); speak(text); };
+    void audio.play();
+  };
+
+  const playPhoneme = (item: Phoneme) => {
+    const source = phonemeAudio[item.id];
+    if (!source) return;
+    window.speechSynthesis.cancel();
+    currentAudio?.pause();
+    const audio = new Audio(new URL(source.replace(/^\/+/, ""), new URL(".", window.location.href)).href);
+    currentAudio = audio;
+    audio.playbackRate = rate === 0.72 ? 0.8 : 1;
+    setPlaying(`phoneme:${item.id}`);
+    audio.onended = () => { if (currentAudio === audio) { currentAudio = null; setPlaying(""); } };
+    audio.onerror = () => { if (currentAudio === audio) { currentAudio = null; setPlaying(""); } };
     void audio.play();
   };
 
   const playContrast = () => {
     if (!contrast) return;
+    currentAudio?.pause();
+    currentAudio = null;
+    window.speechSynthesis.cancel();
     const queue = [contrast[0], contrast[1], contrast[0], contrast[1]];
     let index = 0;
     const next = () => {
@@ -324,6 +349,7 @@ export default function Home() {
       const source = nativeAudio[word];
       if (!source) { speak(`${contrast[0]}. ${contrast[1]}.`); return; }
       const audio = new Audio(new URL(source.replace(/^\/+/, ""), new URL(".", window.location.href)).href);
+      currentAudio = audio;
       audio.playbackRate = rate === 0.72 ? 0.8 : 1;
       setPlaying(`contrast:${word}`);
       audio.onended = () => { index += 1; if (index < queue.length) window.setTimeout(next, 260); else setPlaying(""); };
@@ -335,7 +361,7 @@ export default function Home() {
 
   const selectPhoneme = (item: Phoneme) => {
     setActiveId(item.id);
-    playNative(item.anchor);
+    playPhoneme(item);
     if (window.innerWidth < 920) {
       window.setTimeout(() => document.getElementById("detail")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
     }
@@ -376,7 +402,7 @@ export default function Home() {
           <div className="hero-card-main">
             <span className="card-kicker">TODAY’S SOUND</span>
             <strong>/i/</strong>
-            <button onClick={() => playNative("see")}>▶ 真人示范</button>
+            <button onClick={() => playPhoneme(phonemes[0])}>▶ 真人单音</button>
             <p>see · need · people</p>
           </div>
           <div className="mini-path"><span>分类</span><b>→</b><span>音标</span><b>→</b><span>语流</span></div>
@@ -409,8 +435,8 @@ export default function Home() {
                 <div className="group-title"><h3>{group.name}</h3><span>{group.items[0].groupEn}</span><i>{group.items.length}</i></div>
                 <div className="phoneme-grid">
                   {group.items.map((item) => (
-                    <button key={item.id} className={`phoneme-button ${active.id === item.id ? "selected" : ""} ${learned.includes(item.id) ? "learned" : ""}`} onClick={() => selectPhoneme(item)} aria-label={`选择并播放 ${item.symbol}，例词 ${item.anchor}`}>
-                      <span>/{item.symbol}/</span><small>{item.anchor}</small><b aria-hidden="true">▶</b><em>{nativeAudio[item.anchor] ? "真人音频" : "美式朗读"}</em>
+                    <button key={item.id} className={`phoneme-button ${item.id === "eh" ? "dual-symbol" : ""} ${active.id === item.id ? "selected" : ""} ${learned.includes(item.id) ? "learned" : ""}`} onClick={() => selectPhoneme(item)} aria-label={`选择并播放独立单音 ${phonemeNotation(item)}`}>
+                      <span>{phonemeNotation(item)}</span><small>{item.anchor}</small><b aria-hidden="true">▶</b><em>真人单音</em>
                     </button>
                   ))}
                 </div>
@@ -421,7 +447,7 @@ export default function Home() {
           <aside className="detail-panel" id="detail">
             <div className="detail-topline"><span>{active.family} / {active.group} · NATIVE AUDIO</span><button onClick={toggleLearned}>{learned.includes(active.id) ? "✓ 已掌握" : "○ 标记掌握"}</button></div>
             <div className="sound-identity">
-              <button className={`big-sound ${playing === active.anchor ? "is-playing" : ""}`} onClick={() => playNative(active.anchor)} aria-label={`播放真人示范 ${active.anchor}`}><span>/{active.symbol}/</span><small>{playing === active.anchor ? "真人示范播放中…" : "播放真人示范"}</small><i>▶</i><div className="sound-wave" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></div></button>
+              <button className={`big-sound ${active.id === "eh" ? "dual-symbol" : ""} ${playing === `phoneme:${active.id}` ? "is-playing" : ""}`} onClick={() => playPhoneme(active)} aria-label={`播放真人独立单音 ${phonemeNotation(active)}`}><span>{phonemeNotation(active)}</span><small>{playing === `phoneme:${active.id}` ? "真人单音播放中…" : "播放真人单音"}</small><i>▶</i><div className="sound-wave" aria-hidden="true"><b></b><b></b><b></b><b></b><b></b></div></button>
               <div><p>{active.label}</p><h3>{active.anchor}</h3><span>{active.anchorIpa}</span></div>
             </div>
 
@@ -487,7 +513,7 @@ export default function Home() {
         <div className="rule-banner"><span>7 DAYS</span><div><strong>练习建议：每天只攻克一组相近音</strong><p>先听辨，再模仿单词，最后把音放进词组和句子。准确比速度更重要。</p></div><a href="#sounds">回到音标表 ↑</a></div>
       </section>
 
-      <footer><div className="brand inverse"><span className="brand-mark">A</span><span><strong>美音发音室</strong><small>AMERICAN IPA LAB</small></span></div><p>听清每个音，开口更自信。</p><div className="audio-credit">真人词音频来自 <a href="https://dictionaryapi.dev/" target="_blank" rel="noreferrer">Free Dictionary API / Wiktionary</a>，依原音频许可使用。</div><span>Built for everyday practice</span></footer>
+      <footer><div className="brand inverse"><span className="brand-mark">A</span><span><strong>美音发音室</strong><small>AMERICAN IPA LAB</small></span></div><p>听清每个音，开口更自信。</p><div className="audio-credit">真人单音由 Philip Neal Whitman 为 <a href="https://ielp.ehe.osu.edu/sep/resources/interactive-ipa-charts/" target="_blank" rel="noreferrer">The Ohio State University Spoken English Program</a> 录制（CC BY-NC）；真人词音频来自 <a href="https://dictionaryapi.dev/" target="_blank" rel="noreferrer">Free Dictionary API / Wiktionary</a>。</div><span>Built for everyday practice</span></footer>
     </main>
   );
 }
