@@ -307,7 +307,7 @@ export default function Home() {
       return;
     }
     window.speechSynthesis.cancel();
-    const audio = new Audio(source);
+    const audio = new Audio(new URL(source.replace(/^\/+/, ""), new URL(".", window.location.href)).href);
     audio.playbackRate = rate === 0.72 ? 0.78 : 1;
     setPlaying(text);
     audio.onended = () => setPlaying("");
@@ -323,7 +323,7 @@ export default function Home() {
       const word = queue[index];
       const source = nativeAudio[word];
       if (!source) { speak(`${contrast[0]}. ${contrast[1]}.`); return; }
-      const audio = new Audio(source);
+      const audio = new Audio(new URL(source.replace(/^\/+/, ""), new URL(".", window.location.href)).href);
       audio.playbackRate = rate === 0.72 ? 0.8 : 1;
       setPlaying(`contrast:${word}`);
       audio.onended = () => { index += 1; if (index < queue.length) window.setTimeout(next, 260); else setPlaying(""); };
