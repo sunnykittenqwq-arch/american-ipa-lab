@@ -109,7 +109,7 @@ const phonemes: Phoneme[] = [
 const order = ["前元音", "中元音", "后元音", "双元音", "爆破音", "摩擦音", "破擦音", "鼻音", "近音"];
 
 const nativeAudio = audioData.available as Record<string, string>;
-const phonemeAudio = Object.fromEntries(phonemes.map((item) => [item.id, `/audio/phonemes/${item.id}.wav`])) as Record<string, string>;
+const phonemeAudio = Object.fromEntries(phonemes.map((item) => [item.id, `/audio/phonemes/${item.id}.wav?v=clarity-2`])) as Record<string, string>;
 const phonemeNotation = (item: Phoneme) => item.id === "eh" ? `/${item.symbol}/ · /e/` : `/${item.symbol}/`;
 
 let currentAudio: HTMLAudioElement | null = null;
